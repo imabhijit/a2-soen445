@@ -26,13 +26,24 @@ public class TCPClient {
     }
 
     public void sendRequest(RequestType requestType, String endpoint, String host) throws IOException {
-        sender.println(requestType.toString()+" "+endpoint+" HTTP/1.0");
+        if(requestType == RequestType.GET) sendGetRequest(endpoint, host);
+        if(requestType == RequestType.POST) sendPostRequest(endpoint, host);
+
+    }
+
+    private void sendGetRequest(String endpoint, String host) throws IOException {
+        sender.println(RequestType.GET+" "+endpoint+" HTTP/1.0");
         sender.println("Host: "+host);
         sender.println("Connection: Close");
         sender.println();
 
         printResponse();
         socket.close();
+    }
+
+    private void sendPostRequest(String endpoint, String host) throws IOException {
+        sender.println(RequestType.POST+" "+endpoint+" HTTP/1.0");
+        sender.println("Host: "+host);
     }
 
     private void printResponse() throws IOException {
