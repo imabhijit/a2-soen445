@@ -8,12 +8,21 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class TCPClient {
-    private static Socket socket;
-    private static PrintWriter sender;
-    private static BufferedReader receiver;
+    private Socket socket;
+    private PrintWriter sender;
+    private BufferedReader receiver;
 
+    private TCPClient() {
+        //do not allow creating of TCP client without any params;
+    }
 
-    public void createSocket(String host, int port){
+    public TCPClient(Socket socket, PrintWriter sender, BufferedReader receiver) {
+        this.socket = socket;
+        this.sender = sender;
+        this.receiver = receiver;
+    }
+
+    public TCPClient(String host, int port){
         try{
             socket = new Socket(host, port);
             sender = new PrintWriter(socket.getOutputStream(), true);
@@ -25,37 +34,42 @@ public class TCPClient {
         }
     }
 
-    public void sendRequest(RequestType requestType, String endpoint, String host, String header) throws IOException {
-        if(requestType == RequestType.GET) sendGetRequest(endpoint, host);
-        if(requestType == RequestType.POST) sendPostRequest(endpoint, host, header);
-
-    }
-
-    private void sendGetRequest(String endpoint, String host) throws IOException {
-        sender.println(RequestType.GET+" "+endpoint+" HTTP/1.0");
+    public void sendRequest(RequestType requestType, String endpoint, String host, String header, String data, boolean verbose) throws IOException {
+        sender.println(requestType+" "+endpoint+" HTTP/1.0");
         sender.println("Host: "+host);
-        sender.println("Connection: Close");
-        sender.println();
 
-        printResponse();
+        if(requestType == RequestType.GET) sendGetRequest();
+        if(requestType == RequestType.POST) sendPostRequest(header, data);
+
+        printResponse(verbose);
         socket.close();
     }
 
-    private void sendPostRequest(String endpoint, String host, String header) throws IOException {
-        sender.println(RequestType.POST+" "+endpoint+" HTTP/1.0");
-        sender.println("Host: "+host);
+    private void sendGetRequest() throws IOException {
+        sender.println("Connection: Close");
+        sender.println();
+    }
+
+    private void sendPostRequest(String header, String data) throws IOException {
         sender.println(header);
+        sender.println("Content-Length: "+data.length());
         sender.println();
-//        sender.println(); some jason data
+        sender.println(data);
         sender.println("Connection: Close");
         sender.println();
-
-        printResponse();
-        socket.close();
     }
 
-    private void printResponse() throws IOException {
+    private void printResponse(boolean verbose) throws IOException {
         StringBuilder sb = new StringBuilder();
+        Character character = (char) receiver.read();
+
+        if(verbose == false){
+            while(character != '{') {
+                character = (char) receiver.read();
+            }
+        }
+
+        sb.append(character);
         String line = receiver.readLine();
         while (line != null) {
             sb.append(line+"\n");
