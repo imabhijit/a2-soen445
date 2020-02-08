@@ -25,9 +25,9 @@ public class TCPClient {
         }
     }
 
-    public void sendRequest(RequestType requestType, String endpoint, String host) throws IOException {
+    public void sendRequest(RequestType requestType, String endpoint, String host, String header) throws IOException {
         if(requestType == RequestType.GET) sendGetRequest(endpoint, host);
-        if(requestType == RequestType.POST) sendPostRequest(endpoint, host);
+        if(requestType == RequestType.POST) sendPostRequest(endpoint, host, header);
 
     }
 
@@ -41,9 +41,17 @@ public class TCPClient {
         socket.close();
     }
 
-    private void sendPostRequest(String endpoint, String host) throws IOException {
+    private void sendPostRequest(String endpoint, String host, String header) throws IOException {
         sender.println(RequestType.POST+" "+endpoint+" HTTP/1.0");
         sender.println("Host: "+host);
+        sender.println(header);
+        sender.println();
+//        sender.println(); some jason data
+        sender.println("Connection: Close");
+        sender.println();
+
+        printResponse();
+        socket.close();
     }
 
     private void printResponse() throws IOException {
