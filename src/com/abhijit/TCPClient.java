@@ -8,16 +8,16 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class TCPClient {
-    private Socket socket;
-    PrintWriter sender;
-    BufferedReader receiver;
+    private static Socket socket;
+    private static PrintWriter sender;
+    private static BufferedReader receiver;
 
 
     public void createSocket(String host, int port){
         try{
-            this.socket = new Socket(host, port);
-            this.sender = new PrintWriter(socket.getOutputStream(), true);
-            this.receiver = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            socket = new Socket(host, port);
+            sender = new PrintWriter(socket.getOutputStream(), true);
+            receiver = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (UnknownHostException e) {
             e.printStackTrace();
         } catch (IOException e) {
