@@ -2,7 +2,7 @@ package com.abhijit;
 
 import java.io.IOException;
 
-public class Main {
+public class httpc {
 
     public static void main(String[] args) {
         String host = "httpbin.org";
