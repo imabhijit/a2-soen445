@@ -11,6 +11,7 @@ public class CommandLineParser {
     String data = "";
     Boolean bodyFromData = false;
     Boolean error = false;
+    int urlIndex = 0;
     int i = 0;
 
     public void updateAttributes(String args[]){
@@ -49,7 +50,15 @@ public class CommandLineParser {
                 }
             }
 
-            if(i>=args.length){break;}
+            if(args[i].equalsIgnoreCase("-o")) {
+                this.urlIndex = i - 1;
+                break;
+            }
+
+            if(i>=args.length){
+                this.urlIndex = i - 1;
+                break;
+            }
 
             i++;
         }

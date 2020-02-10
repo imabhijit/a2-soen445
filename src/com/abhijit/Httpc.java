@@ -2,7 +2,9 @@ package com.abhijit;
 
 import sun.misc.Request;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -16,6 +18,8 @@ public class Httpc {
     static boolean verbose = false;
     static HttpcHelp helpWriter = new HttpcHelp();
     static int urlIndex = 1;
+    static boolean output = false;
+    static String filepath = "";
 
     public static void main(String[] args) {
 
@@ -43,6 +47,8 @@ public class Httpc {
                 host = url.getHost();
                 endpoint = url.getFile();
                 TCPClient client = new TCPClient(host, (url.getPort()==-1) ? 80: url.getPort());
+                client.setOutput(output);
+                client.setFilePath(filepath);
                 //TODO: add support for headers (-h command)
                 client.sendRequest(requestType, endpoint, host, header, data, verbose);
             } catch (MalformedURLException e) {
@@ -70,6 +76,10 @@ public class Httpc {
                     invalidSyntax(requestType);
                 }
             }
+            if(args[urlIndex + 1].equalsIgnoreCase("-o")){
+                output = true;
+                filepath = args[urlIndex + 2];
+            }
         } else {
             invalidSyntax(requestType);
         }
@@ -80,11 +90,17 @@ public class Httpc {
 
         CommandLineParser clp = new CommandLineParser();
         clp.updateAttributes(args);
-        urlIndex = clp.i - 1;
+        urlIndex = clp.urlIndex;
 
         if(clp.error){
             invalidSyntax(requestType);
         }
+
+        if(args[urlIndex + 1].equalsIgnoreCase("-o")){
+            output = true;
+            filepath = args[urlIndex + 2];
+        }
+
         verbose = clp.verbose;
         header = clp.headers;
         data = clp.data;

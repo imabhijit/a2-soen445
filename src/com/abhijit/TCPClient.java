@@ -11,9 +11,19 @@ public class TCPClient {
     private Socket socket;
     private PrintWriter sender;
     private BufferedReader receiver;
+    private Boolean output;
+    private String filePath;
 
     private TCPClient() {
         //do not allow creating of TCP client without any params;
+    }
+
+    public void setOutput(Boolean output) {
+        this.output = output;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 
     public TCPClient(Socket socket, PrintWriter sender, BufferedReader receiver) {
@@ -76,6 +86,13 @@ public class TCPClient {
             line = receiver.readLine();
         }
         receiver.close();
-        System.out.println(sb.toString());
+        if(output){
+            PrintWriter pw = new PrintWriter(filePath);
+            pw.println(sb.toString());
+            pw.close();
+        }else{
+            System.out.println(sb.toString());
+        }
+
     }
 }
