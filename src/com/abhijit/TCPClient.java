@@ -37,6 +37,7 @@ public class TCPClient {
     public void sendRequest(RequestType requestType, String endpoint, String host, String header, String data, boolean verbose) throws IOException {
         sender.println(requestType+" "+endpoint+" HTTP/1.0");
         sender.println("Host: "+host);
+        sender.println(header);
 
         if(requestType == RequestType.GET) sendGetRequest(); //TODO: add support for headers (-h command)
         if(requestType == RequestType.POST) sendPostRequest(header, data);
@@ -51,7 +52,6 @@ public class TCPClient {
     }
 
     private void sendPostRequest(String header, String data) throws IOException {
-        sender.println(header);
         sender.println("Content-Length: "+data.length());
         sender.println();
         sender.println(data);

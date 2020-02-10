@@ -2,17 +2,15 @@ package com.abhijit;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 
 public class Httpc {
-    static String host = "httpbin.org";
-    static RequestType requestType = RequestType.POST;
-    static String endpoint = "/post";
-    static String header = "Content-Type: application/json";
-    static String data = "{\"Assignment\": 1}";
+    static String host;
+    static RequestType requestType;
+    static String endpoint;
+    static String header;
+    static String data;
     static boolean verbose = false;
     static HttpcHelp helpWriter = new HttpcHelp();
     static int urlIndex = 1;
@@ -60,14 +58,14 @@ public class Httpc {
         urlIndex = 1;
         requestType = RequestType.GET;
         if (args.length > 1) {
-            if (args[1].equalsIgnoreCase("-v")) {
+            if (args[urlIndex].equalsIgnoreCase("-v")) {
                 verbose = true;
                 urlIndex += 1;
             }
-            if (args[1].equalsIgnoreCase("-h")) {
+            if (args[urlIndex].equalsIgnoreCase("-h")) {
                 if (args.length > 2) {
                     //TODO check if header need to be a list for example if we can have many different headers?
-                    header = args[2];
+                    header = args[urlIndex+1];
                     urlIndex += 2;
                 } else {
                     invalidSyntax(requestType);
