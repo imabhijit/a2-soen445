@@ -38,7 +38,7 @@ public class TCPClient {
         sender.println(requestType+" "+endpoint+" HTTP/1.0");
         sender.println("Host: "+host);
 
-        if(requestType == RequestType.GET) sendGetRequest();
+        if(requestType == RequestType.GET) sendGetRequest(); //TODO: add support for headers (-h command)
         if(requestType == RequestType.POST) sendPostRequest(header, data);
 
         printResponse(verbose);
