@@ -1,5 +1,3 @@
-package com.abhijit;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,8 +35,6 @@ public class TCPClient {
             socket = new Socket(host, port);
             sender = new PrintWriter(socket.getOutputStream(), true);
             receiver = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -56,12 +52,12 @@ public class TCPClient {
         socket.close();
     }
 
-    private void sendGetRequest() throws IOException {
+    private void sendGetRequest() {
         sender.println("Connection: Close");
         sender.println();
     }
 
-    private void sendPostRequest(String header, String data) throws IOException {
+    private void sendPostRequest(String header, String data) {
         sender.println("Content-Length: "+data.length());
         sender.println();
         sender.println(data);
@@ -71,7 +67,7 @@ public class TCPClient {
 
     private void printResponse(boolean verbose) throws IOException {
         StringBuilder sb = new StringBuilder();
-        Character character = (char) receiver.read();
+        char character = (char) receiver.read();
 
         if(verbose == false){
             while(character != '{') {

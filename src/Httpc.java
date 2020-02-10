@@ -1,5 +1,3 @@
-package com.abhijit;
-
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -48,8 +46,6 @@ public class Httpc {
                 client.setOutputToFile(outputToFile);
                 client.setFilePath(filepath);
                 client.sendRequest(requestType, endpoint, host, header, data, verbose);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -65,7 +61,7 @@ public class Httpc {
                 urlIndex += 1;
             }
             if (args[urlIndex].equalsIgnoreCase("-h")) {
-                if (args.length > urlIndex) {
+                if (args.length > urlIndex+1) {
                     header = args[urlIndex+1];
                     urlIndex += 2;
                 } else {
@@ -73,14 +69,14 @@ public class Httpc {
                 }
             }
             if (args[urlIndex].equalsIgnoreCase("-d")) {
-                if (args.length > urlIndex) {
+                if (args.length > urlIndex+1) {
                     data = args[urlIndex+1];
                     urlIndex += 2;
                 } else {
                     invalidSyntax(requestType);
                 }
             } else if(args[urlIndex].equalsIgnoreCase("-f")){
-                if (args.length > urlIndex) {
+                if (args.length > urlIndex+1) {
                     data = convertFileToString(args[urlIndex+1]);
                     urlIndex += 2;
                 } else {

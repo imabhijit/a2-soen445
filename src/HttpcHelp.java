@@ -1,5 +1,3 @@
-package com.abhijit;
-
 public class HttpcHelp {
 
     public void printHelp(){
