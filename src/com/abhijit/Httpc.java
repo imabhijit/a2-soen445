@@ -1,5 +1,7 @@
 package com.abhijit;
 
+import sun.misc.Request;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -16,8 +18,6 @@ public class Httpc {
     static int urlIndex = 1;
 
     public static void main(String[] args) {
-
-//        TCPClient httpc = new TCPClient(host, 80);
 
         if (args.length > 0) {
             if (args[0].equalsIgnoreCase("help")) {
@@ -64,7 +64,6 @@ public class Httpc {
             }
             if (args[urlIndex].equalsIgnoreCase("-h")) {
                 if (args.length > 2) {
-                    //TODO check if header need to be a list for example if we can have many different headers?
                     header = args[urlIndex+1];
                     urlIndex += 2;
                 } else {
@@ -77,6 +76,18 @@ public class Httpc {
     }
 
     public static void processPostRequest(String[] args) {
+        requestType = RequestType.POST;
+
+        CommandLineParser clp = new CommandLineParser();
+        clp.updateAttributes(args);
+        urlIndex = clp.i - 1;
+
+        if(clp.error){
+            invalidSyntax(requestType);
+        }
+        verbose = clp.verbose;
+        header = clp.headers;
+        data = clp.data;
 
     }
 
@@ -85,5 +96,7 @@ public class Httpc {
         if (requestType == RequestType.GET) helpWriter.printHelpGet();
         else if (requestType == RequestType.POST) helpWriter.printHelpPost();
         else helpWriter.printHelpError();
+
+        System.exit(0);
     }
 }
