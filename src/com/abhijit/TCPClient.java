@@ -11,15 +11,15 @@ public class TCPClient {
     private Socket socket;
     private PrintWriter sender;
     private BufferedReader receiver;
-    private Boolean output;
+    private Boolean outputToFile;
     private String filePath;
 
     private TCPClient() {
         //do not allow creating of TCP client without any params;
     }
 
-    public void setOutput(Boolean output) {
-        this.output = output;
+    public void setOutputToFile(Boolean outputToFile) {
+        this.outputToFile = outputToFile;
     }
 
     public void setFilePath(String filePath) {
@@ -49,7 +49,7 @@ public class TCPClient {
         sender.println("Host: "+host);
         sender.println(header);
 
-        if(requestType == RequestType.GET) sendGetRequest(); //TODO: add support for headers (-h command)
+        if(requestType == RequestType.GET) sendGetRequest();
         if(requestType == RequestType.POST) sendPostRequest(header, data);
 
         printResponse(verbose);
@@ -86,7 +86,7 @@ public class TCPClient {
             line = receiver.readLine();
         }
         receiver.close();
-        if(output){
+        if(outputToFile){
             PrintWriter pw = new PrintWriter(filePath);
             pw.println(sb.toString());
             pw.close();

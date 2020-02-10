@@ -1,10 +1,6 @@
 package com.abhijit;
 
-import sun.misc.Request;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -18,7 +14,7 @@ public class Httpc {
     static boolean verbose = false;
     static HttpcHelp helpWriter = new HttpcHelp();
     static int urlIndex = 1;
-    static boolean output = false;
+    static boolean outputToFile = false;
     static String filepath = "";
 
     public static void main(String[] args) {
@@ -37,9 +33,11 @@ public class Httpc {
                     helpWriter.printHelp();
                 }
             } else if (args[0].equalsIgnoreCase("get")) {
-                processGetRequest(args);
+                requestType = RequestType.GET;
+                processRequest(args);
             } else if (args[0].equalsIgnoreCase("post")) {
-                processPostRequest(args);
+                requestType = RequestType.POST;
+                processRequest(args);
             }
 
             try {
@@ -47,9 +45,8 @@ public class Httpc {
                 host = url.getHost();
                 endpoint = url.getFile();
                 TCPClient client = new TCPClient(host, (url.getPort()==-1) ? 80: url.getPort());
-                client.setOutput(output);
+                client.setOutputToFile(outputToFile);
                 client.setFilePath(filepath);
-                //TODO: add support for headers (-h command)
                 client.sendRequest(requestType, endpoint, host, header, data, verbose);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -60,51 +57,43 @@ public class Httpc {
 
     }
 
-    public static void processGetRequest(String[] args) {
+    public static void processRequest(String[] args) {
         urlIndex = 1;
-        requestType = RequestType.GET;
-        if (args.length > 1) {
+        if (args.length > urlIndex) {
             if (args[urlIndex].equalsIgnoreCase("-v")) {
                 verbose = true;
                 urlIndex += 1;
             }
             if (args[urlIndex].equalsIgnoreCase("-h")) {
-                if (args.length > 2) {
+                if (args.length > urlIndex) {
                     header = args[urlIndex+1];
                     urlIndex += 2;
                 } else {
                     invalidSyntax(requestType);
                 }
             }
-            if(args[urlIndex + 1].equalsIgnoreCase("-o")){
-                output = true;
+            if (args[urlIndex].equalsIgnoreCase("-d")) {
+                if (args.length > urlIndex) {
+                    data = args[urlIndex+1];
+                    urlIndex += 2;
+                } else {
+                    invalidSyntax(requestType);
+                }
+            } else if(args[urlIndex].equalsIgnoreCase("-f")){
+                if (args.length > urlIndex) {
+                    data = convertFileToString(args[urlIndex+1]);
+                    urlIndex += 2;
+                } else {
+                    invalidSyntax(requestType);
+                }
+            }
+            if(urlIndex+1 < args.length && args[urlIndex + 1].equalsIgnoreCase("-o")){
+                outputToFile = true;
                 filepath = args[urlIndex + 2];
             }
         } else {
             invalidSyntax(requestType);
         }
-    }
-
-    public static void processPostRequest(String[] args) {
-        requestType = RequestType.POST;
-
-        CommandLineParser clp = new CommandLineParser();
-        clp.updateAttributes(args);
-        urlIndex = clp.urlIndex;
-
-        if(clp.error){
-            invalidSyntax(requestType);
-        }
-
-        if(args[urlIndex + 1].equalsIgnoreCase("-o")){
-            output = true;
-            filepath = args[urlIndex + 2];
-        }
-
-        verbose = clp.verbose;
-        header = clp.headers;
-        data = clp.data;
-
     }
 
     public static void invalidSyntax(RequestType requestType) {
@@ -114,5 +103,22 @@ public class Httpc {
         else helpWriter.printHelpError();
 
         System.exit(0);
+    }
+
+    public static String convertFileToString(String filepath){
+        BufferedReader bufferedReader;
+        StringBuilder str = new StringBuilder();
+        try {
+            bufferedReader = new BufferedReader(new FileReader(filepath));
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                str.append(line);
+                line = bufferedReader.readLine();
+            }
+            bufferedReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return str.toString();
     }
 }
