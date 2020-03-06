@@ -1,3 +1,5 @@
+package clientSide;
+
 public class HttpcHelp {
 
     public void printHelp(){

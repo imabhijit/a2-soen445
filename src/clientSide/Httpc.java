@@ -1,3 +1,5 @@
+package clientSide;
+
 import java.io.*;
 import java.net.URL;
 
@@ -41,7 +43,7 @@ public class Httpc {
                 URL url = new URL(args[urlIndex]);
                 host = url.getHost();
                 endpoint = url.getFile();
-                TCPClient client = new TCPClient(host, (url.getPort()==-1) ? 80: url.getPort());
+                Client client = new Client(host, (url.getPort()==-1) ? 80: url.getPort());
                 client.setOutputToFile(outputToFile);
                 client.setFilePath(filepath);
                 client.sendRequest(requestType, endpoint, host, header, data, verbose);

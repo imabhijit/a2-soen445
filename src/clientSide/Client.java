@@ -1,17 +1,19 @@
+package clientSide;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class TCPClient {
+public class Client {
     private Socket socket;
     private PrintWriter sender;
     private BufferedReader receiver;
     private Boolean outputToFile;
     private String filePath;
 
-    private TCPClient() {
+    private Client() {
         //do not allow creating of TCP client without any params;
     }
 
@@ -23,13 +25,13 @@ public class TCPClient {
         this.filePath = filePath;
     }
 
-    public TCPClient(Socket socket, PrintWriter sender, BufferedReader receiver) {
+    public Client(Socket socket, PrintWriter sender, BufferedReader receiver) {
         this.socket = socket;
         this.sender = sender;
         this.receiver = receiver;
     }
 
-    public TCPClient(String host, int port){
+    public Client(String host, int port){
         try{
             socket = new Socket(host, port);
             sender = new PrintWriter(socket.getOutputStream(), true);
@@ -52,7 +54,7 @@ public class TCPClient {
     }
 
     private void sendGetRequest() {
-        sender.println("Connection: Close");
+//        sender.println("Connection: Close");
         sender.println();
     }
 
@@ -60,7 +62,7 @@ public class TCPClient {
         sender.println("Content-Length: "+data.length());
         sender.println();
         sender.println(data);
-        sender.println("Connection: Close");
+//        sender.println("Connection: Close");
         sender.println();
     }
 
