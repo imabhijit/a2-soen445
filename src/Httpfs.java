@@ -143,6 +143,7 @@ public class Httpfs {
                 responseWriter = new PrintWriter(client.getOutputStream());
                 String request = RequestToString(requestReader);
                 data = request;
+
                 System.out.println(createResponse(request));
                 responseWriter.print(createResponse(request));
                 responseWriter.flush();
