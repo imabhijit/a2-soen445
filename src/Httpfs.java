@@ -1,6 +1,9 @@
 import clientSide.RequestType;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -8,8 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.security.AccessControlException;
-import java.security.AccessController;
 
 public class Httpfs {
     private static ServerSocket serverSocket;
@@ -66,13 +67,12 @@ public class Httpfs {
     }
 
     public static String postResponse(String requestString) {
-        String body = data;
         if (!filePath.equals("/") && !filePath.equals("/..")) {
             Path path = Paths.get(pathToMainDirectory + filePath);
             try {
                 Files.isWritable(path);
                 Files.createDirectories(path.getParent());
-                Files.write(path, body.getBytes(), StandardOpenOption.CREATE);
+                Files.write(path, data.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             } catch (SecurityException se) {
                 return requestSpecification + httpVersion + " " + Status.FORBIDDEN.toString() + "\r\n\r\n";
             } catch (IOException e) {
@@ -135,6 +135,7 @@ public class Httpfs {
                 requestReader = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 responseWriter = new PrintWriter(client.getOutputStream());
                 String request = RequestToString(requestReader);
+                data = request;
                 System.out.println(createResponse(request));
                 responseWriter.print(createResponse(request));
                 responseWriter.flush();
