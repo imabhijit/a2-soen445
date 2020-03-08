@@ -67,19 +67,26 @@ public class Httpfs {
     }
 
     public static String postResponse(String requestString) {
-        if (!filePath.equals("/") && !filePath.equals("/..")) {
+        String status = Status.OK.toString();
+        if( filePath.equals("/") || filePath.equals("/..")){
+            status = Status.BAD_REQUEST.toString();
+        }
+        else{
             Path path = Paths.get(pathToMainDirectory + filePath);
             try {
                 Files.isWritable(path);
+                if(Files.notExists(path)){
+                    status = Status.CREATED.toString();
+                }
                 Files.createDirectories(path.getParent());
-                Files.write(path, data.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                Files.write(path, data.getBytes(), StandardOpenOption.CREATE);
             } catch (SecurityException se) {
-                return requestSpecification + httpVersion + " " + Status.FORBIDDEN.toString() + "\r\n\r\n";
+                return requestSpecification + httpVersion + " " + Status.FORBIDDEN.toString() + "\r\n" + headers + "\r\n";
             } catch (IOException e) {
-                System.out.println("An error occurred while trying to write to file.");
+                status = Status.BAD_REQUEST.toString();
             }
         }
-        return requestSpecification + httpVersion + " " + Status.OK.toString() + "\r\n\r\n";
+        return requestSpecification + httpVersion + " " + status + "\r\n" + headers + "\r\n";
     }
 
     public static String getResponse() {
