@@ -63,7 +63,7 @@ public class Httpfs {
             return getResponse();
         } else if (requestType == RequestType.POST) {
             return postResponse(requestString);
-        } else return requestSpecification + Status.BAD_REQUEST.toString() + "\r\n\r\n";
+        } else return requestSpecification + httpVersion + " " + Status.BAD_REQUEST.toString() + "\r\n" + headers + "\r\n";
     }
 
     public static String postResponse(String requestString) {
@@ -81,7 +81,7 @@ public class Httpfs {
                 Files.createDirectories(path.getParent());
                 Files.write(path, data.getBytes(), StandardOpenOption.CREATE);
             } catch (SecurityException se) {
-                return requestSpecification + httpVersion + " " + Status.FORBIDDEN.toString() + "\r\n" + headers + "\r\n";
+                status = Status.FORBIDDEN.toString();
             } catch (IOException e) {
                 status = Status.BAD_REQUEST.toString();
             }
