@@ -17,7 +17,7 @@ public class Httpfs {
     private static String httpVersion;
     private static String filePath;
     private static String pathToMainDirectory = "src/documents";
-    private static String requestSpecification;
+    private static String requestSpecification = "";
     private static boolean debugging;
     private static String headers = "";
     private static String data = "";
@@ -85,15 +85,15 @@ public class Httpfs {
         } else {
             Path path = Paths.get(pathToMainDirectory + filePath);
             try {
-                Files.isWritable(path);
+                if(!Files.isWritable(path.getParent())){
+                    return requestSpecification + httpVersion + " " + Status.FORBIDDEN.toString() + "\r\n" + headers + "\r\n";
+                }
                 contentType = Files.probeContentType(path);
                 if (Files.notExists(path)) {
                     status = Status.CREATED.toString();
                 }
                 Files.createDirectories(path.getParent());
                 Files.write(path, data.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            } catch (SecurityException se) {
-                status = Status.FORBIDDEN.toString();
             } catch (IOException e) {
                 status = Status.BAD_REQUEST.toString();
             }
@@ -108,14 +108,15 @@ public class Httpfs {
         if (!filePath.equals("/") && !filePath.equals("/..")) {
             Path path = Paths.get(pathToMainDirectory + filePath);
             try {
-                Files.isReadable(path);
+                if(Files.notExists(path) || Files.isDirectory(path)) throw new IOException();
+                if(!Files.isReadable(path)){
+                    return requestSpecification + httpVersion + " " + Status.FORBIDDEN.toString() + "\r\n" + headers + "\r\n";
+                }
                 contentType = Files.probeContentType(path);
                 if (!contentType.equals("text/html") && !contentType.equals("text/plain")) {
                     contentDisposition = "attachment";
                 }
                 body = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-            } catch (SecurityException se) {
-                return requestSpecification + httpVersion + " " + Status.FORBIDDEN.toString() + "\r\n" + headers + "\r\n";
             } catch (IOException e) {
                 return requestSpecification + httpVersion + " " + Status.NOT_FOUND.toString() + "\r\n" + headers + "Content-Length: " + body.length() + "\r\nContent-Type: " + contentType + "\r\n\r\n" + "404 Not Found.";
             }
