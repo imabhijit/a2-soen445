@@ -33,9 +33,9 @@ public class Client {
 
     public Client(String host, int port){
         try{
-            socket = new Socket(host, port);
-            sender = new PrintWriter(socket.getOutputStream(), true);
-            receiver = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.socket = new Socket(host, port);
+            this.sender = new PrintWriter(socket.getOutputStream(), true);
+            this.receiver = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
             e.printStackTrace();
         }

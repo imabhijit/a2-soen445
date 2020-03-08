@@ -1,3 +1,5 @@
+import clientSide.RequestType;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,6 +17,7 @@ public class Httpfs {
     private static String requestSpecification;
     private static boolean debugging;
     private static String data;
+    private static RequestType requestType;
     private static int port = 8080;
 
 
@@ -45,8 +48,8 @@ public class Httpfs {
         StringBuilder sb = new StringBuilder();
 
         String line = requestReader.readLine();
+        requestType = line.split(" ")[0].equalsIgnoreCase("GET") ? RequestType.GET : RequestType.POST;
         filePath = pathToDirectory + line.split(" ")[1];
-
         httpVersion = line.split(" ")[2];
 
         while (line != null && !line.isEmpty()) {
@@ -58,6 +61,53 @@ public class Httpfs {
     }
 
     public static String createResponse(String requestString) {
+        if(requestType == RequestType.GET){
+            return getResponse(requestString);
+        }else{
+            return postResponse(requestString);
+        }
+    }
+
+    public static String postResponse(String requestString){
+        String body = "";
+        if(!filePath.equals("/")) {
+            try {
+                body = new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                File newFile = new File(filePath);
+                writeToFile(newFile, body);
+//                return requestSpecification + httpVersion + " " + Status.CREATED.toString() + "\r\nContent-Length: " + body.length() + "\r\nContent-Type: text/html\r\n\r\n" + "201 Created.";
+                return requestSpecification + Status.CREATED.toString();
+            }
+        }
+        writeToFile(filePath, body);
+//        return requestSpecification + httpVersion + " " + Status.OK.toString() + "\r\nContent-Length: " + body.length() + "\r\nContent-Type: text/html\r\n\r\n" + body;
+        return requestSpecification + Status.OK.toString();
+    }
+
+    public static void writeToFile(String file, String body){
+        try{
+            FileWriter fw = new FileWriter(file);
+            fw.write(body);
+            fw.close();
+        }catch (IOException e){
+            System.out.println("An error occurred while trying to write in new file created.");
+            e.printStackTrace();
+        }
+    }
+
+    public static void writeToFile(File file, String body){
+        try{
+            FileWriter fw = new FileWriter(file);
+            fw.write(body);
+            fw.close();
+        }catch (IOException e){
+            System.out.println("An error occurred while trying to write in new file created.");
+            e.printStackTrace();
+        }
+    }
+
+    public static String getResponse(String requestString){
         String body = "";
         if(!filePath.equals("/")) {
             try {
