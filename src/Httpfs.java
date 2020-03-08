@@ -32,12 +32,16 @@ public class Httpfs {
     private static String RequestToString(BufferedReader requestReader) throws IOException {
         StringBuilder sb = new StringBuilder();
         String line = requestReader.readLine();
+
         httpVersion = line.split(" ")[2];
+
         while (line != null) {
+            if(line.isEmpty()){
+                break;
+            }
             sb.append(line+"\n");
             line = requestReader.readLine();
         }
-        requestReader.close();
         return sb.toString();
     }
 
@@ -59,8 +63,8 @@ public class Httpfs {
                 requestReader = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 responseWriter = new PrintWriter(client.getOutputStream());
 
+                System.out.println("Before Reading");
                 String request = RequestToString(requestReader);
-                System.out.println(request);
                 System.out.println(createResponse(request));
                 responseWriter.print(createResponse(request));
                 responseWriter.flush();
