@@ -54,7 +54,7 @@ public class Client {
     }
 
     private void sendGetRequest() {
-//        sender.println("Connection: Close");
+        sender.println("Connection: Close");
         sender.println();
     }
 
@@ -62,7 +62,7 @@ public class Client {
         sender.println("Content-Length: "+data.length());
         sender.println();
         sender.println(data);
-//        sender.println("Connection: Close");
+        sender.println("Connection: Close");
         sender.println();
     }
 

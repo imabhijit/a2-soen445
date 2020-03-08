@@ -19,8 +19,8 @@ public class Httpfs {
     private static String pathToMainDirectory = "src/documents";
     private static String requestSpecification;
     private static boolean debugging;
-    private static String headers;
-    private static String data;
+    private static String headers = "";
+    private static String data = "";
     private static RequestType requestType;
     private static int port = 8080;
 
@@ -44,17 +44,27 @@ public class Httpfs {
         requestType = line.split(" ")[0].equalsIgnoreCase("GET") ? RequestType.GET : RequestType.POST;
         filePath = line.split(" ")[1];
         httpVersion = line.split(" ")[2];
+        int count = 0;
         while (line != null) {
             sb.append(line + "\n");
             line = requestReader.readLine();
 
             if (line.isEmpty()) break;
 
+            if (line.contains("Content-Length")) {
+                count = Integer.valueOf(line.split(":")[1]);
+            }
+
             if (!line.contains("Content-")) {
                 headers = headers + line + "\r\n";
             }
         }
-        requestSpecification = (debugging) ? sb.toString()+"\r\n" : "";
+
+        for (int i = 0; i < count; i++) {
+            data = data + (char) requestReader.read();
+        }
+
+        requestSpecification = (debugging) ? sb.toString() + "\r\n" + data + "\r\n" : "";
         return sb.toString();
     }
 
@@ -63,30 +73,32 @@ public class Httpfs {
             return getResponse();
         } else if (requestType == RequestType.POST) {
             return postResponse(requestString);
-        } else return requestSpecification + httpVersion + " " + Status.BAD_REQUEST.toString() + "\r\n" + headers + "\r\n";
+        } else
+            return requestSpecification + httpVersion + " " + Status.BAD_REQUEST.toString() + "\r\n" + headers + "\r\n";
     }
 
     public static String postResponse(String requestString) {
         String status = Status.OK.toString();
-        if( filePath.equals("/") || filePath.equals("/..")){
+        String contentType = "text/html";
+        if (filePath.equals("/") || filePath.equals("/..")) {
             status = Status.BAD_REQUEST.toString();
-        }
-        else{
+        } else {
             Path path = Paths.get(pathToMainDirectory + filePath);
             try {
                 Files.isWritable(path);
-                if(Files.notExists(path)){
+                contentType = Files.probeContentType(path);
+                if (Files.notExists(path)) {
                     status = Status.CREATED.toString();
                 }
                 Files.createDirectories(path.getParent());
-                Files.write(path, data.getBytes(), StandardOpenOption.CREATE);
+                Files.write(path, data.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             } catch (SecurityException se) {
                 status = Status.FORBIDDEN.toString();
             } catch (IOException e) {
                 status = Status.BAD_REQUEST.toString();
             }
         }
-        return requestSpecification + httpVersion + " " + status + "\r\n" + headers + "\r\n";
+        return requestSpecification + httpVersion + " " + status + "\r\n" + headers + "Content-Length: " + data.length() + "\r\nContent-Type: " + contentType + "\r\n\r\n" + data;
     }
 
     public static String getResponse() {
@@ -142,19 +154,30 @@ public class Httpfs {
                 requestReader = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 responseWriter = new PrintWriter(client.getOutputStream());
                 String request = RequestToString(requestReader);
-                data = request;
 
-                System.out.println(createResponse(request));
-                responseWriter.print(createResponse(request));
+                String response = createResponse(request);
+                System.out.println(response);
+                responseWriter.print(response);
                 responseWriter.flush();
                 client.close();
 
-                headers = "";
+                resetVars();
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    private static void resetVars() {
+        serverSocket = null;
+        httpVersion = "";
+        filePath = "";
+        requestSpecification = "";
+        headers = "";
+        data = "";
+        requestType = null;
+        port = 8080;
     }
 
     private static void parseCommand(int i, String[] arr) {
