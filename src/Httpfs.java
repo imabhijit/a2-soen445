@@ -5,7 +5,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.AccessControlException;
 import java.security.AccessController;
 
@@ -13,9 +15,10 @@ public class Httpfs {
     private static ServerSocket serverSocket;
     private static String httpVersion;
     private static String filePath;
-    private static String pathToDirectory = "src/documents";
+    private static String pathToMainDirectory = "src/documents";
     private static String requestSpecification;
     private static boolean debugging;
+    private static String headers;
     private static String data;
     private static RequestType requestType;
     private static int port = 8080;
@@ -34,89 +37,71 @@ public class Httpfs {
         return serverSocket;
     }
 
-    public static void checkPermission(String filePath, String permission) {
-        FilePermission filePermission = new FilePermission(filePath, permission);
-        try {
-            AccessController.checkPermission(filePermission);
-        } catch (AccessControlException e) {
-            System.out.println(Status.FORBIDDEN.toString());
-            e.printStackTrace();
-        }
-    }
-
     private static String RequestToString(BufferedReader requestReader) throws IOException {
         StringBuilder sb = new StringBuilder();
-
         String line = requestReader.readLine();
         requestType = line.split(" ")[0].equalsIgnoreCase("GET") ? RequestType.GET : RequestType.POST;
-        filePath = pathToDirectory + line.split(" ")[1];
+        filePath = line.split(" ")[1];
         httpVersion = line.split(" ")[2];
-
-        while (line != null && !line.isEmpty()) {
+        while (line != null) {
             sb.append(line + "\n");
             line = requestReader.readLine();
+
+            if (line.isEmpty()) break;
+
+            if (!line.contains("Content-")) {
+                headers = headers + line + "\r\n";
+            }
         }
-        requestSpecification = (debugging) ? sb.toString():"";
+        requestSpecification = (debugging) ? sb.toString()+"\r\n" : "";
         return sb.toString();
     }
 
     public static String createResponse(String requestString) {
-        if(requestType == RequestType.GET){
-            return getResponse(requestString);
-        }else{
+        if (requestType == RequestType.GET) {
+            return getResponse();
+        } else if (requestType == RequestType.POST) {
             return postResponse(requestString);
-        }
+        } else return requestSpecification + Status.BAD_REQUEST.toString() + "\r\n\r\n";
     }
 
-    public static String postResponse(String requestString){
-        String body = "";
-        if(!filePath.equals("/")) {
+    public static String postResponse(String requestString) {
+        String body = data;
+        if (!filePath.equals("/") && !filePath.equals("/..")) {
+            Path path = Paths.get(pathToMainDirectory + filePath);
             try {
-                body = new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
+                Files.isWritable(path);
+                Files.createDirectories(path.getParent());
+                Files.write(path, body.getBytes(), StandardOpenOption.CREATE);
+            } catch (SecurityException se) {
+                return requestSpecification + httpVersion + " " + Status.FORBIDDEN.toString() + "\r\n\r\n";
             } catch (IOException e) {
-                File newFile = new File(filePath);
-                writeToFile(newFile, body);
-//                return requestSpecification + httpVersion + " " + Status.CREATED.toString() + "\r\nContent-Length: " + body.length() + "\r\nContent-Type: text/html\r\n\r\n" + "201 Created.";
-                return requestSpecification + Status.CREATED.toString();
+                System.out.println("An error occurred while trying to write to file.");
             }
         }
-        writeToFile(filePath, body);
-//        return requestSpecification + httpVersion + " " + Status.OK.toString() + "\r\nContent-Length: " + body.length() + "\r\nContent-Type: text/html\r\n\r\n" + body;
-        return requestSpecification + Status.OK.toString();
+        return requestSpecification + httpVersion + " " + Status.OK.toString() + "\r\n\r\n";
     }
 
-    public static void writeToFile(String file, String body){
-        try{
-            FileWriter fw = new FileWriter(file);
-            fw.write(body);
-            fw.close();
-        }catch (IOException e){
-            System.out.println("An error occurred while trying to write in new file created.");
-            e.printStackTrace();
-        }
-    }
-
-    public static void writeToFile(File file, String body){
-        try{
-            FileWriter fw = new FileWriter(file);
-            fw.write(body);
-            fw.close();
-        }catch (IOException e){
-            System.out.println("An error occurred while trying to write in new file created.");
-            e.printStackTrace();
-        }
-    }
-
-    public static String getResponse(String requestString){
-        String body = "";
-        if(!filePath.equals("/")) {
+    public static String getResponse() {
+        String body = "Home Directory";
+        String contentType = "text/html";
+        String contentDisposition = "inline";
+        if (!filePath.equals("/") && !filePath.equals("/..")) {
+            Path path = Paths.get(pathToMainDirectory + filePath);
             try {
-                body = new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
+                Files.isReadable(path);
+                contentType = Files.probeContentType(path);
+                if (!contentType.equals("text/html") && !contentType.equals("text/plain")) {
+                    contentDisposition = "attachment";
+                }
+                body = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+            } catch (SecurityException se) {
+                return requestSpecification + httpVersion + " " + Status.FORBIDDEN.toString() + "\r\n" + headers + "\r\n";
             } catch (IOException e) {
-                return requestSpecification + httpVersion + " " + Status.NOT_FOUND.toString() + "\r\nContent-Length: " + body.length() + "\r\nContent-Type: text/html\r\n\r\n" + "404 Not Found.";
+                return requestSpecification + httpVersion + " " + Status.NOT_FOUND.toString() + "\r\n" + headers + "Content-Length: " + body.length() + "\r\nContent-Type: " + contentType + "\r\n\r\n" + "404 Not Found.";
             }
         }
-        return requestSpecification + httpVersion + " " + Status.OK.toString() + "\r\nContent-Length: " + body.length() + "\r\nContent-Type: text/html\r\n\r\n" + body;
+        return requestSpecification + httpVersion + " " + Status.OK.toString() + "\r\n" + headers + "Content-Length: " + body.length() + "\r\nContent-Type: " + contentType + "\r\nContent-Disposition: " + contentDisposition + "\r\n\r\n" + body;
     }
 
     public static void main(String[] args) {
@@ -153,6 +138,9 @@ public class Httpfs {
                 System.out.println(createResponse(request));
                 responseWriter.print(createResponse(request));
                 responseWriter.flush();
+                client.close();
+
+                headers = "";
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -166,7 +154,7 @@ public class Httpfs {
         } else if (arr[i].equalsIgnoreCase("-p")) {
             port = Integer.valueOf(arr[i + 1]);
         } else if (arr[i].equalsIgnoreCase("-d")) {
-            pathToDirectory = arr[i + 1];
+            pathToMainDirectory = arr[i + 1];
         }
     }
 }
